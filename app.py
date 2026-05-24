@@ -11,6 +11,7 @@ Features:
   • All model comparison charts
   • AI report generation via Ollama (local LLM)
 """
+import google.generativeai as genai
 
 import os, warnings, json, glob, requests
 import numpy as np
@@ -1174,145 +1175,195 @@ elif "Forecast" in page:
 # ══════════════════════════════════════════════════════════════════════════════
 elif "AI Report" in page:
     st.markdown('<div class="page-title">🤖 AI Report Generator</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-sub">Generate professional monitoring reports using local Ollama LLM</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Generate professional monitoring reports using Gemini AI</div>', unsafe_allow_html=True)
 
-    st.markdown("""<div class="alert-info">
-    <strong>ℹ️ Setup required:</strong><br>
-    1. Install Ollama: <a href="https://ollama.com" target="_blank">ollama.com</a><br>
-    2. Run: <code>ollama serve</code><br>
-    3. Pull model: <code>ollama pull llama3.2</code>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="alert-info">
+    <strong>ℹ️ Cloud AI enabled:</strong><br>
+    Reports are generated using Gemini API and work in Streamlit deployment.
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns([2,1])
+
     with col1:
-        report_type = st.selectbox("Report Type", [
-            "Daily Monitoring Summary",
-            "Weekly Trend Analysis",
-            "Festival Season Infrastructure Alert",
-            "Monthly Performance Review",
-            "YoY Growth Analysis",
-            "Custom Prompt",
-        ])
-        ollama_model = st.text_input("Ollama Model", value=OLLAMA_MODEL,
-                                      help="Run 'ollama list' to see available models")
-        n_days_report = st.slider("Analysis window (days)", 7, 90, 30)
+        report_type = st.selectbox(
+            "Report Type",
+            [
+                "Daily Monitoring Summary",
+                "Weekly Trend Analysis",
+                "Festival Season Infrastructure Alert",
+                "Monthly Performance Review",
+                "YoY Growth Analysis",
+                "Custom Prompt",
+            ]
+        )
+
+        gemini_model = st.selectbox(
+            "Gemini Model",
+            [
+                "gemini-2.5-flash",
+                "gemini-2.5-pro"
+            ]
+        )
+
+        n_days_report = st.slider(
+            "Analysis window (days)",
+            7,
+            90,
+            30
+        )
 
     with col2:
-        st.markdown("**Available Ollama Models:**")
-        try:
-            resp = requests.get("http://localhost:11434/api/tags", timeout=3)
-            if resp.status_code == 200:
-                models = [m["name"] for m in resp.json().get("models",[])]
-                for m in models:
-                    st.markdown(f'<span style="background:#2CA02C;color:white;padding:2px 8px;border-radius:8px;font-size:11px;margin:2px;display:inline-block;">{m}</span>', unsafe_allow_html=True)
-                if not models:
-                    st.markdown('<div class="alert-high">No models found. Pull one first.</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="alert-high">⚠️ Ollama not responding</div>', unsafe_allow_html=True)
-        except:
-            st.markdown('<div class="alert-high">⚠️ Ollama not running<br>Run: <code>ollama serve</code></div>', unsafe_allow_html=True)
+        st.markdown("**Available AI Models:**")
+
+        st.markdown(
+            '<span style="background:#1A73E8;color:white;padding:2px 8px;border-radius:8px;font-size:11px;margin:2px;display:inline-block;">Gemini Flash</span>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            '<span style="background:#34A853;color:white;padding:2px 8px;border-radius:8px;font-size:11px;margin:2px;display:inline-block;">Gemini Pro</span>',
+            unsafe_allow_html=True
+        )
 
     # Custom prompt or auto-build
     if report_type == "Custom Prompt":
-        custom_prompt = st.text_area("Enter your prompt", height=150,
-            placeholder="e.g. Analyse UPI transaction trends for November 2025 and identify infrastructure risks...")
+
+        custom_prompt = st.text_area(
+            "Enter your prompt",
+            height=150,
+            placeholder="e.g. Analyse UPI transaction trends for November 2025 and identify infrastructure risks..."
+        )
+
     else:
+
         risk_days = compute_risk_calendar(14)
         yoy_alerts = compute_yoy_alerts(df, target, n_days_report)
 
         type_prompts = {
-            "Daily Monitoring Summary": build_report_prompt(df, target, 7, risk_days, yoy_alerts),
-            "Weekly Trend Analysis": build_report_prompt(df, target, 7, risk_days, yoy_alerts),
-            "Festival Season Infrastructure Alert": f"""You are an NPCI infrastructure analyst. 
+
+            "Daily Monitoring Summary":
+            build_report_prompt(
+                df,
+                target,
+                7,
+                risk_days,
+                yoy_alerts
+            ),
+
+            "Weekly Trend Analysis":
+            build_report_prompt(
+                df,
+                target,
+                7,
+                risk_days,
+                yoy_alerts
+            ),
+
+            "Festival Season Infrastructure Alert":
+            f"""You are an NPCI infrastructure analyst.
+
 Write a 250-word alert report about upcoming festival season risks for UPI infrastructure.
-Focus on these upcoming high-risk days: {[r['date']+' ('+r['severity']+')' for r in risk_days[:5]]}.
-Include specific recommendations for server scaling and monitoring.
-Current daily average: {df[target].tail(30).mean():.1f} {target}.
-Data through: {df['Date'].max().strftime('%d %B %Y')}.""",
-            "Monthly Performance Review": build_report_prompt(df, target, 30, risk_days, yoy_alerts),
-            "YoY Growth Analysis": f"""You are an NPCI data analyst.
+
+Focus on these upcoming high-risk days:
+{[r['date']+' ('+r['severity']+')' for r in risk_days[:5]]}
+
+Include specific recommendations for:
+
+- server scaling
+- monitoring
+- infrastructure readiness
+
+Current daily average:
+{df[target].tail(30).mean():.1f} {target}
+
+Data through:
+{df['Date'].max().strftime('%d %B %Y')}
+""",
+
+            "Monthly Performance Review":
+            build_report_prompt(
+                df,
+                target,
+                30,
+                risk_days,
+                yoy_alerts
+            ),
+
+            "YoY Growth Analysis":
+            f"""You are an NPCI data analyst.
+
 Write a 250-word year-over-year growth analysis for UPI {target}.
-YoY alerts: {[(a['date'], f"{a['raw_pct']:+.1f}%") for a in yoy_alerts[:5]]}.
-Latest value: {df[target].iloc[-1]:.1f}. 
-Annual totals: {df.groupby('YearStr')[target].sum().round(0).to_dict()}.
-Data through: {df['Date'].max().strftime('%d %B %Y')}.""",
+
+YoY alerts:
+{[(a['date'], f"{a['raw_pct']:+.1f}%") for a in yoy_alerts[:5]]}
+
+Latest value:
+{df[target].iloc[-1]:.1f}
+
+Annual totals:
+{df.groupby('YearStr')[target].sum().round(0).to_dict()}
+
+Data through:
+{df['Date'].max().strftime('%d %B %Y')}
+"""
         }
+
         custom_prompt = type_prompts.get(report_type, "")
+
         with st.expander("📋 View auto-generated prompt"):
             st.text(custom_prompt)
 
-    if st.button("🤖 Generate Report", type="primary", use_container_width=True):
-        with st.spinner(f"Generating report using {ollama_model}..."):
-            report = generate_report_ollama(custom_prompt, ollama_model)
+    if st.button("🤖 Generate Report",
+                 type="primary",
+                 use_container_width=True):
 
-        st.markdown('<div class="section-hdr">Generated Report</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="report-box">{report}</div>', unsafe_allow_html=True)
+        with st.spinner("Generating report using Gemini..."):
 
-        # Download button
-        st.download_button("📥 Download Report",
-                            f"UPI {report_type}\nGenerated: {datetime.now().strftime('%d %b %Y %H:%M')}\n\n{report}",
-                            f"upi_report_{date.today().isoformat()}.txt", "text/plain")
+            try:
 
+                import google.generativeai as genai
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE 9 — DATA EXPLORER
-# ══════════════════════════════════════════════════════════════════════════════
-elif "Explorer" in page:
-    st.markdown('<div class="page-title">📋 Data Explorer</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="page-sub">{len(df):,} daily records · May 2021 – Mar 2026</div>', unsafe_allow_html=True)
+                genai.configure(
+                    api_key=st.secrets["GEMINI_API_KEY"]
+                )
 
-    c1,c2,c3,c4 = st.columns(4)
-    with c1: yr  = st.selectbox("Year",  ["All"]+sorted(df["YearStr"].unique().tolist(),reverse=True))
-    with c2: mo  = st.selectbox("Month", ["All"]+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
-    with c3: dt  = st.selectbox("Day Type", ["All","Weekday","Weekend","Festival","Long Weekend"])
-    with c4: sc  = st.selectbox("Sort By",  ["Date ↓","Volume ↓","Value ↓"])
+                model = genai.GenerativeModel(
+                    gemini_model
+                )
 
-    fil = df.copy()
-    if yr != "All": fil = fil[fil["YearStr"]==yr]
-    if mo != "All": fil = fil[fil["MonthName"]==mo]
-    if dt == "Weekday":     fil = fil[fil["Is_Weekday"]==1]
-    elif dt == "Weekend":   fil = fil[fil["Is_Weekend"]==1]
-    elif dt == "Festival":  fil = fil[fil["Is_Festival"]==1]
-    elif dt == "Long Weekend": fil = fil[fil["Is_Long_Weekend"]==1]
-    sc_map={"Date ↓":"Date","Volume ↓":"Volume (In Mn.)","Value ↓":"Value (In Cr.)"}
-    fil = fil.sort_values(sc_map[sc], ascending=(sc=="Date ↓"))
+                final_prompt = f"""
+You are an expert NPCI infrastructure analyst.
 
-    c1,c2,c3,c4 = st.columns(4)
-    with c1: st.metric("Records",    f"{len(fil):,}")
-    with c2: st.metric("Avg Volume", f"{fil['Volume (In Mn.)'].mean():.1f} Mn")
-    with c3: st.metric("Avg Value",  f"₹{fil['Value (In Cr.)'].mean():,.0f} Cr")
-    with c4: st.metric("Max Volume", f"{fil['Volume (In Mn.)'].max():.0f} Mn")
+Generate a professional report.
 
-    show = ["Date","Volume (In Mn.)","Value (In Cr.)","Day_Name","Is_Weekend","Is_Festival","Festival_Name"]
-    st.dataframe(fil[show].reset_index(drop=True), use_container_width=True, height=400)
+{custom_prompt}
+"""
 
-    col1,col2 = st.columns(2)
-    with col1: st.download_button("📥 Download Filtered CSV", fil.to_csv(index=False), "upi_filtered.csv","text/csv")
-    with col2: st.download_button("📥 Download Full Dataset", df.to_csv(index=False), "upi_full.csv","text/csv")
+                response = model.generate_content(
+                    final_prompt
+                )
 
+                report = response.text
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE 10 — ABOUT
-# ══════════════════════════════════════════════════════════════════════════════
-elif "About" in page:
-    st.markdown('<div class="page-title">ℹ️ About</div>', unsafe_allow_html=True)
-    c1,c2 = st.columns([2,1])
-    with c1:
-        st.markdown("""<div style='background:black;border-radius:12px;padding:20px;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.05);border-top:3px solid #1A6FBF;'>
-        <strong style='font-family:Syne,sans-serif;font-size:18px;'>UPI Live Forecasting Dashboard</strong><br><br>
-        A comprehensive time series forecasting and monitoring system for India's UPI transaction infrastructure.
-        Built as a minor project, designed to serve as an internal monitoring tool for NPCI.<br><br>
-        <strong>Data:</strong> May 2021 – March 2026 (1,796 daily rows)<br>
-        <strong>Source:</strong> BHIM/NPCI website + generated 2026 data<br>
-        <strong>Models:</strong> 21 models across 6 families<br>
-        <strong>GitHub:</strong> <a href="https://github.com/ekshu007/upi-timeseries">github.com/ekshu007/upi-timeseries</a>
-        </div>""", unsafe_allow_html=True)
-    with c2:
-        st.markdown("""<div style='background:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);'>
-        <strong>Monthly Update:</strong><br>
-        <code>python monthly_updater.py</code><br><br>
-        <strong>Manual entry:</strong><br>
-        <code>python monthly_updater.py --manual</code><br><br>
-        <strong>Schedule (cron):</strong><br>
-        <code>0 9 1 * * python monthly_updater.py</code>
-        </div>""", unsafe_allow_html=True)
+            except Exception as e:
+
+                report = f"Error generating report: {str(e)}"
+
+        st.markdown(
+            '<div class="section-hdr">Generated Report</div>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            f'<div class="report-box">{report}</div>',
+            unsafe_allow_html=True
+        )
+
+        st.download_button(
+            "📥 Download Report",
+            f"UPI {report_type}\nGenerated: {datetime.now().strftime('%d %b %Y %H:%M')}\n\n{report}",
+            f"upi_report_{date.today().isoformat()}.txt",
+            "text/plain"
+        )
