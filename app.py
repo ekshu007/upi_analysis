@@ -1,10 +1,10 @@
 """
-app.py — UPI Live Forecasting Dashboard (NPCI Internal Tool)
+app.py — UPI Forecasting Dashboard (NPCI Internal Tool)
 ============================================================
 Run: streamlit run app.py
 
 Features:
-  • Live data from master CSV (updated monthly via monthly_updater.py)
+  • Data from master CSV (updated monthly via monthly_updater.py)
   • YoY same-day alerts (volume/value vs previous years same day)
   • Anomaly detection (z-score based)
   • Infrastructure risk calendar (festival/month-end scoring)
@@ -171,21 +171,6 @@ div[data-testid="stMetric"] > div {
     color: #000000 !important;
 }
 
-/* ---------- LIVE DOT ---------- */
-.live-dot {
-    display:inline-block;
-    width:8px;
-    height:8px;
-    background:#22C55E;
-    border-radius:50%;
-    margin-right:5px;
-    animation:blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0%,100%{opacity:1;}
-    50%{opacity:0.2;}
-}
 
 /* ---------- SAFE TEXT RULE (NO GLOBAL FORCE) ---------- */
 p, span {
@@ -262,7 +247,10 @@ def compute_yoy_alerts(df, target, n_days=30):
     recent year-pairs and only alert when actual deviates from that expectation.
     """
     alerts = []
-    recent = df.tail(n_days)
+    recent = df.tail(n_days).copy()
+    real_data_end = "2025-12-31"
+    real_df = df[df["Date"] <= real_data_end].copy()
+    recent  = real_df.tail(n_days).copy()
 
     # Step 1: Compute expected YoY growth from all available year-pairs
     yearly_avg = df.groupby("YearStr")[target].mean()
@@ -277,7 +265,7 @@ def compute_yoy_alerts(df, target, n_days=30):
 
     for _, row in recent.iterrows():
         d   = row["Date"]
-        val = row[target]
+        val = float(row[target])
         if pd.isna(val): continue
 
         # Step 2: ONLY compare to 1 year ago — not 2 or 3
@@ -297,7 +285,7 @@ def compute_yoy_alerts(df, target, n_days=30):
         else:
             match_type = "exact"
 
-        prev_val = match[target].values[0]
+        prev_val = float(match[target].values[0])
         if prev_val == 0:
             continue
 
@@ -320,8 +308,8 @@ def compute_yoy_alerts(df, target, n_days=30):
 
         # Severity based on deviation from trend (not raw %)
         abs_dev = abs(deviation)
-        sev = ("🔴 CRITICAL" if abs_dev > 40 else
-               "🟠 HIGH"     if abs_dev > 25 else
+        sev = ("🔴 CRITICAL" if abs_dev > 50 else
+               "🟠 HIGH"     if abs_dev > 30 else
                "🟡 MEDIUM"   if abs_dev > 15 else
                "🟢 LOW")
 
@@ -337,8 +325,7 @@ def compute_yoy_alerts(df, target, n_days=30):
             "severity":  sev,
             "match":     match_type,
             "direction": direction,
-            "context":   context,
-            "target":    target,
+            "context":   context
         })
 
     return sorted(alerts, key=lambda x: abs(x["deviation"]), reverse=True)
@@ -516,7 +503,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     page = st.radio("", [
-        "🏠  Live Overview",
+        "🏠  Overview",
         "🚨  Alert Centre",
         "📊  YoY Analysis",
         "🔮  Risk Calendar",
@@ -544,10 +531,10 @@ with st.sidebar:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE 1 — LIVE OVERVIEW
+# PAGE 1 — OVERVIEW
 # ══════════════════════════════════════════════════════════════════════════════
 if "Overview" in page:
-    st.markdown('<div class="page-title">💳 UPI Live Overview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-title">💳 UPI Overview</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="page-sub"><span class="live-dot"></span>Real-time monitoring · Data through {df["Date"].max().strftime("%d %b %Y")}</div>', unsafe_allow_html=True)
 
     # ── Risk banner ───────────────────────────────────────────────────────────
@@ -661,7 +648,7 @@ elif "Alert" in page:
                 <strong>{a['severity']} — {a['date']} ({a['day']})</strong><br>
                 Current: <strong>{a['current']:.1f}</strong> |
                 Prev: <strong>{a['prev_val']:.1f}</strong> |
-                Change: <strong>{a.get('pct', 0):+.1f}%</strong>
+                Change: <strong>{a.get('raw_pct'):+.1f}%</strong>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -847,7 +834,7 @@ elif "YoY" in page:
             color_continuous_scale="YlOrRd",
             title=f"Avg Daily {target} by Month × Year"
         )
-        fig_hm.update_layout(template="plotly_white", height=280)
+        fig_hm.update_layout(template="plotly_white", height=450)
         st.plotly_chart(fig_hm, use_container_width=True)
 
         pct = pivot.pct_change() * 100
@@ -859,36 +846,9 @@ elif "YoY" in page:
             color_continuous_midpoint=0,
             title="YoY % Change by Month"
         )
-        fig_pct.update_layout(template="plotly_white", height=240)
+        fig_pct.update_layout(template="plotly_white", height=450)
         st.plotly_chart(fig_pct, use_container_width=True)
 
-    # Plot forecast
-    future_dates = [df["Date"].max() + pd.Timedelta(days=i+1) for i in range(steps)]
-
-    fig_f = go.Figure()
-    fig_f.add_trace(go.Scatter(
-        x=df["Date"].tail(30),
-        y=df[target].tail(30),
-        mode="lines",
-        name="Actual",
-        line=dict(width=2)
-    ))
-
-    fig_f.add_trace(go.Scatter(
-        x=future_dates,
-        y=forecast,
-        mode="lines+markers",
-        name="Forecast",
-        line=dict(dash="dash", width=2)
-    ))
-
-    fig_f.update_layout(
-        template="plotly_white",
-        height=350,
-        title="Actual vs Forecast (Next Days)"
-    )
-
-    st.plotly_chart(fig_f, use_container_width=True)
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE 4 — RISK CALENDAR
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1195,7 +1155,7 @@ elif "Forecast" in page:
         height=450,
         title="Volume Forecast",
         xaxis_title="Date",
-        yaxis_title="Volume (Mn)"
+        yaxis_title="Volume (Millions)"
     )
 
     st.plotly_chart(fig, use_container_width=True)
