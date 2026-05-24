@@ -1,0 +1,11 @@
+{
+  "model": "LSTM-BiDirectional (univariate)",
+  "target": "Volume (In Mn.)",
+  "window": 30,
+  "features": [
+    "Volume (In Mn.)"
+  ],
+  "MAE": 62.8878,
+  "RMSE": 71.5876,
+  "MAPE": 8.9872
+}

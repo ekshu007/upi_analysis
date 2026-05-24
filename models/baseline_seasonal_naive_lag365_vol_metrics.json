@@ -1,0 +1,7 @@
+{
+  "model": "Seasonal Naive (lag=365)",
+  "target": "Volume (In Mn.)",
+  "MAE": 144.654,
+  "RMSE": 157.5632,
+  "MAPE": 20.2574
+}

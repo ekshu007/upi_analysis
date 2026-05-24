@@ -1,0 +1,7 @@
+{
+  "model": "SES",
+  "target": "Volume (In Mn.)",
+  "MAE": 57.757,
+  "RMSE": 67.9734,
+  "MAPE": 8.2599
+}

@@ -1,0 +1,7 @@
+{
+  "model": "Prophet",
+  "target": "Volume (In Mn.)",
+  "MAE": 46.9433,
+  "RMSE": 64.8604,
+  "MAPE": 7.2505
+}

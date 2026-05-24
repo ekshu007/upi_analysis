@@ -1,0 +1,7 @@
+{
+  "model": "Rolling Mean (30d)",
+  "target": "Value (In Cr.)",
+  "MAE": 11828.93,
+  "RMSE": 13803.6445,
+  "MAPE": 12.6291
+}

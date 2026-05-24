@@ -1,0 +1,7 @@
+{
+  "model": "ETS (mul,add,mul,7)",
+  "target": "Value (In Cr.)",
+  "MAE": 13029.0181,
+  "RMSE": 15366.9242,
+  "MAPE": 15.3301
+}

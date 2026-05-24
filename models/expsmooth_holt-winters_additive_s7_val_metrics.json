@@ -1,0 +1,7 @@
+{
+  "model": "Holt-Winters Additive (s=7)",
+  "target": "Value (In Cr.)",
+  "MAE": 10614.1275,
+  "RMSE": 13187.0822,
+  "MAPE": 12.819
+}

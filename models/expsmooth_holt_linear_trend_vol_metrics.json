@@ -1,0 +1,7 @@
+{
+  "model": "Holt Linear Trend",
+  "target": "Volume (In Mn.)",
+  "MAE": 48.2837,
+  "RMSE": 62.3826,
+  "MAPE": 7.3387
+}

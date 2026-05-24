@@ -1,0 +1,7 @@
+{
+  "model": "Historical Mean",
+  "target": "Volume (In Mn.)",
+  "MAE": 347.6748,
+  "RMSE": 353.2669,
+  "MAPE": 49.7062
+}

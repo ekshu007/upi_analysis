@@ -1,0 +1,7 @@
+{
+  "model": "ARIMA(2, 1, 1)",
+  "target": "Volume (In Mn.)",
+  "MAE": 63.8112,
+  "RMSE": 73.8242,
+  "MAPE": 9.0107
+}

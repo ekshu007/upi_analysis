@@ -1,0 +1,1 @@
+0 9 1 * * cd /app && python monthly_updater.py >> /var/log/cron.log 2>&1

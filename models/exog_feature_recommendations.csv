@@ -1,0 +1,10 @@
+Feature,Correlation,Stat. Significant,MI Rank,Use in SARIMAX,Use in Prophet,Use in LSTM,Notes
+Is_Weekend,Strong negative (Sunday dips),✅ Yes,High,✅ Yes,✅ Yes (add_regressor),✅ Yes (multivariate),Most impactful binary feature
+Is_Festival,Moderate negative (holiday suppression),✅ Yes,Medium,✅ Yes,✅ Via holidays DataFrame,✅ Yes,"Pass as holidays to Prophet, not regressor"
+Is_Holiday_Adjacent,Weak,Conditional,Low–Medium,✅ Yes,✅ Via lower/upper_window,✅ Yes,Prophet handles this natively with window params
+Is_Long_Weekend,Moderate negative,✅ Yes,Medium,✅ Yes,✅ Yes (add_regressor),✅ Yes,Correlated with Is_Weekend — watch multicollinearity
+Holiday_Cluster_7D,Moderate negative,✅ Yes,Medium,✅ Yes,✅ Yes (add_regressor),✅ Yes,Captures cumulative holiday density
+Days_To_Next_Holiday,Weak,❌ Often not,Low,❌ Drop,❌ Redundant with holidays,⚠️  Optional,Many NaN values; redundant with Is_Holiday_Adjacent
+Days_Since_Prev_Holiday,Weak,❌ Often not,Low,❌ Drop,❌ Redundant,⚠️  Optional,Many NaN values at start of series
+Day_Number,Strong (captures weekend cycle),✅ Yes,High,⚠️  Redundant with s=7 seasonal,⚠️  Redundant with weekly_seasonality,✅ Yes — helps learn weekly cycle,Avoid in SARIMA/Prophet; useful for LSTM
+Month_Num,Moderate (yearly seasonality),✅ Yes,Medium–High,⚠️  Redundant with s=12 or yearly seasonal,⚠️  Redundant with yearly_seasonality,✅ Yes,Useful for LSTM multivariate input

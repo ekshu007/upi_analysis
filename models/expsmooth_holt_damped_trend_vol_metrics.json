@@ -1,0 +1,7 @@
+{
+  "model": "Holt Damped Trend",
+  "target": "Volume (In Mn.)",
+  "MAE": 57.7579,
+  "RMSE": 67.9729,
+  "MAPE": 8.26
+}

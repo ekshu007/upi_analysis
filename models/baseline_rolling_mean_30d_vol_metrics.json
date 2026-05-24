@@ -1,0 +1,7 @@
+{
+  "model": "Rolling Mean (30d)",
+  "target": "Volume (In Mn.)",
+  "MAE": 63.8625,
+  "RMSE": 73.7847,
+  "MAPE": 9.0203
+}

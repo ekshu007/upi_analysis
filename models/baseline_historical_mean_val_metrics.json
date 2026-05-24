@@ -1,0 +1,7 @@
+{
+  "model": "Historical Mean",
+  "target": "Value (In Cr.)",
+  "MAE": 39344.1028,
+  "RMSE": 41001.2955,
+  "MAPE": 42.445
+}

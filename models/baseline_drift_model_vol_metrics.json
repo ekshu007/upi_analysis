@@ -1,0 +1,7 @@
+{
+  "model": "Drift Model",
+  "target": "Volume (In Mn.)",
+  "MAE": 47.1653,
+  "RMSE": 63.6116,
+  "MAPE": 7.2569
+}

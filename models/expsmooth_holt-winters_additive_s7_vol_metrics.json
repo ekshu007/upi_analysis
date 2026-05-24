@@ -1,0 +1,7 @@
+{
+  "model": "Holt-Winters Additive (s=7)",
+  "target": "Volume (In Mn.)",
+  "MAE": 47.7433,
+  "RMSE": 62.3776,
+  "MAPE": 7.2809
+}

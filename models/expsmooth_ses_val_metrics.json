@@ -1,0 +1,7 @@
+{
+  "model": "SES",
+  "target": "Value (In Cr.)",
+  "MAE": 10333.9896,
+  "RMSE": 11555.8853,
+  "MAPE": 11.8518
+}

@@ -1,0 +1,7 @@
+{
+  "model": "Drift Model",
+  "target": "Value (In Cr.)",
+  "MAE": 17755.6146,
+  "RMSE": 20937.5871,
+  "MAPE": 21.5947
+}
